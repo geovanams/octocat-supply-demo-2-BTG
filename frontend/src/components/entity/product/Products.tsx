@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import StarRating from './StarRating';
 
 interface Product {
   productId: number;
@@ -16,8 +17,18 @@ interface Product {
   discount?: number;
 }
 
+interface ReviewSummary {
+  avgRating: number;
+  count: number;
+}
+
 const fetchProducts = async (): Promise<Product[]> => {
   const { data } = await axios.get(`${api.baseURL}${api.endpoints.products}`);
+  return data;
+};
+
+const fetchReviewSummaries = async (): Promise<Record<number, ReviewSummary>> => {
+  const { data } = await axios.get(`${api.baseURL}${api.endpoints.productReviews}/summaries`);
   return data;
 };
 
@@ -27,6 +38,9 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
+  const { data: reviewSummaries = {} } = useQuery('reviewSummaries', fetchReviewSummaries, {
+    staleTime: 30_000,
+  });
   const { darkMode } = useTheme();
 
   const filteredProducts = products?.filter(
@@ -190,6 +204,11 @@ export default function Products() {
                     {product.description}
                   </p>
                   <div className="space-y-4 mt-auto">
+                    <StarRating
+                      productId={product.productId}
+                      averageRating={reviewSummaries[product.productId]?.avgRating ?? null}
+                      reviewCount={reviewSummaries[product.productId]?.count ?? 0}
+                    />
                     <div className="flex justify-between items-center">
                       {hasDiscount ? (
                         <div>
@@ -297,10 +316,15 @@ export default function Products() {
               {selectedProduct.name}
             </h2>
             <p
-              className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-lg transition-colors duration-300`}
+              className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-lg mb-6 transition-colors duration-300`}
             >
               {selectedProduct.description}
             </p>
+            <StarRating
+              productId={selectedProduct.productId}
+              averageRating={reviewSummaries[selectedProduct.productId]?.avgRating ?? null}
+              reviewCount={reviewSummaries[selectedProduct.productId]?.count ?? 0}
+            />
           </div>
         </div>
       )}

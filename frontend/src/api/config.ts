@@ -35,6 +35,7 @@ export const api = {
   baseURL: API_BASE_URL,
   endpoints: {
     products: '/api/products',
+    productReviews: '/api/product-reviews',
     suppliers: '/api/suppliers',
     orders: '/api/orders',
     branches: '/api/branches',
